@@ -32,6 +32,10 @@ python tests/ray_core.py
 ```
 and if Ray works well, the program will print `Ture`.
 
+Moreover, there is a simple MapReduce demo using Ray:
+```
+python tests/map_reduce.py
+```
 
 ## References
 
