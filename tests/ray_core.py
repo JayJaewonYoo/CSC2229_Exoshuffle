@@ -1,9 +1,9 @@
-# This is a test file for Ray Core.
+# This is a test file for Ray Core, including tasks, actors, and objects.
 # Reference: https://docs.ray.io/en/latest/ray-core/walkthrough.html
 
 import ray
 import numpy as np
-
+import time
 
 # =====================================
 # Running a Task
@@ -28,7 +28,7 @@ def launch_tasks():
     """
 
     futures = [square.remote(i) for i in range(5)]
-    return ray.get(futures)
+    assert ray.get(futures) == [0, 1, 4, 9, 16]
 
 
 # =====================================
@@ -67,7 +67,7 @@ def launch_actor():
         c.incr.remote(1)
 
     # retrieve final results.
-    return ray.get(c.get.remote())
+    assert ray.get(c.get.remote()) == 10
 
 
 # =====================================
@@ -99,7 +99,56 @@ def pass_obj():
     # call the task with the object reference as an argument.
     sum2 = ray.get(sum_matrix.remote(matrix_ref))
 
-    return (sum1, sum2)
+    assert sum1 == 10000.0
+    assert sum2 == 1000000.0
+
+
+# =====================================
+# Specifying Required Resources and Passing Obj Refs
+# =====================================
+
+
+@ray.remote(num_cpus=1)
+def my_func(x: int = 1):
+    return x
+
+
+def specify_resources():
+    """
+    This function shows how to specify computing resources via Ray.
+    """
+
+    # invokes the function with default 2 cpus.
+    obj_ref_1 = my_func.remote()
+
+    # overrides the default resource requirements.
+    obj_ref_2 = my_func.options(num_cpus=2).remote(2)
+
+    # passes an object ref as an argument to another Ray task, and note that
+    # this will be blocked until the task of obj_ref_2 finished.
+    obj_ref_3 = my_func.remote(obj_ref_2)
+
+    assert ray.get(obj_ref_1) == 1
+    assert ray.get(obj_ref_2) == 2
+    assert ray.get(obj_ref_3) == 2
+
+
+# =====================================
+# Waiting for Partial Results
+# =====================================
+
+
+@ray.remote
+def slow_function(i):
+    time.sleep(1)
+    return i
+
+
+def wait():
+    object_refs = [slow_function.remote(i) for i in range(2)]
+    # returns as soon as one of the tasks finished execution.
+    ready_refs, remaining_refs = ray.wait(object_refs, num_returns=1, timeout=None)
+    assert (ready_refs, remaining_refs) == (1, 2) or (2, 1)
 
 
 if __name__ == "__main__":
@@ -113,11 +162,12 @@ if __name__ == "__main__":
 
     ray.init()
 
-    assert launch_tasks() == [0, 1, 4, 9, 16]
-    assert launch_actor() == 10
-    assert pass_obj() == (10000.0, 1000000.0)
+    launch_tasks()
+    launch_actor()
+    pass_obj()
+    specify_resources()
+    wait()
 
     # If Ray works normally, the main function will print Ture.
     print(True)
-
     ray.shutdown()
