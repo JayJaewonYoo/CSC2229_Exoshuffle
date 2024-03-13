@@ -30,13 +30,7 @@ objects) for building and scaling distributed applications. We have provided
 ```
 python tests/ray_core.py
 ```
-and the sample printed results are as follows:
-```
-2024-03-12 22:25:50,911 INFO worker.py:1715 -- Started a local Ray instance. View the dashboard at 127.0.0.1:8265 
-[0, 1, 4, 9, 16]
-10
-10000.0 1000000.0
-```
+and if Ray works well, the program will print `Ture`.
 
 
 ## References

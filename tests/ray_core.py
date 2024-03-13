@@ -28,7 +28,7 @@ def launch_tasks():
     """
 
     futures = [square.remote(i) for i in range(5)]
-    print(ray.get(futures))
+    return ray.get(futures)
 
 
 # =====================================
@@ -67,7 +67,7 @@ def launch_actor():
         c.incr.remote(1)
 
     # retrieve final results.
-    print(ray.get(c.get.remote()))
+    return ray.get(c.get.remote())
 
 
 # =====================================
@@ -99,7 +99,7 @@ def pass_obj():
     # call the task with the object reference as an argument.
     sum2 = ray.get(sum_matrix.remote(matrix_ref))
 
-    print(sum1, sum2)
+    return (sum1, sum2)
 
 
 if __name__ == "__main__":
@@ -113,8 +113,11 @@ if __name__ == "__main__":
 
     ray.init()
 
-    launch_tasks()
-    launch_actor()
-    pass_obj()
+    assert launch_tasks() == [0, 1, 4, 9, 16]
+    assert launch_actor() == 10
+    assert pass_obj() == (10000.0, 1000000.0)
+
+    # If Ray works normally, the main function will print Ture.
+    print(True)
 
     ray.shutdown()
