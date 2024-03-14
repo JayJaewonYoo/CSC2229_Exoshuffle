@@ -1,5 +1,10 @@
-# This is a simple MapReduce example with Ray Core.
-# Reference: https://docs.ray.io/en/latest/ray-core/examples/map_reduce.html
+# This is a simple MapReduce example with the simple shuffle mechanism through
+# Ray Core. The definition of simple shuffle is define in Figure 2 of the
+# Exoshuffle paper.
+#
+# Reference:
+# https://docs.ray.io/en/latest/ray-core/examples/map_reduce.html (Ray Core, MapReduce)
+# https://dl.acm.org/doi/pdf/10.1145/3603269.3604848 (Exoshuffle)
 
 import subprocess
 import ray
@@ -33,31 +38,37 @@ def apply_reduce(*results):
     return reduce_results
 
 
-if __name__ == "__main__":
-
-    # data loading.
-    zen_of_python = subprocess.check_output(["python", "-c", "import this"])
-    corpus = zen_of_python.split()
+def simple_shuffle(corpus: list, debug: bool = False):
+    """
+    This function implements the simple shuffle through Ray.
+    """
 
     num_partitions = 3
     chunk = len(corpus) // num_partitions
     partitions = [corpus[i * chunk : (i + 1) * chunk] for i in range(num_partitions)]
 
-    # mapping phase.
+    # =====================================
+    # Map Stage.
+    # =====================================
+
     map_results = [
         apply_map.options(num_returns=num_partitions).remote(data, num_partitions)
         for data in partitions
     ]
 
-    print("Partial Mapping Results:")
-    for i in range(num_partitions):
-        mapper_results = ray.get(map_results[i])
-        for j, result in enumerate(mapper_results):
-            print(f"Mapper {i}, return value {j}: {result[:2]}")
+    # =====================================
+    # Shuffle and Reduce Stage.
+    # =====================================
+    if debug:
+        print("Shuffle Results:")
+        for i in range(num_partitions):
+            mapper_results = ray.get(map_results[i])
+            for j, result in enumerate(mapper_results):
+                print(f"Partial results from Mapper {i} to Reducer {j}: {result[:2]}")
 
-    # shuffling and reduce phase.
-    print("\n\nFinal Results:")
+    # results in each Reducer.
     outputs = []
+
     for i in range(num_partitions):
         outputs.append(
             apply_reduce.remote(*[partition[i] for partition in map_results])
@@ -66,5 +77,17 @@ if __name__ == "__main__":
     counts = {k: v for output in ray.get(outputs) for k, v in output.items()}
 
     sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
-    for count in sorted_counts:
-        print(f"{count[0].decode('utf-8')}: {count[1]}")
+
+    if debug:
+        print("\nSorted Counts:")
+        for count in sorted_counts:
+            print(f"{count[0].decode('utf-8')}: {count[1]}")
+
+
+if __name__ == "__main__":
+
+    # data loading.
+    zen_of_python = subprocess.check_output(["python", "-c", "import this"])
+    corpus = zen_of_python.split()
+
+    simple_shuffle(corpus, True)
