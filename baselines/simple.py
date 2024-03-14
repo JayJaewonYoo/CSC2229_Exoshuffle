@@ -38,30 +38,42 @@ def apply_reduce(*results):
     return reduce_results
 
 
-def simple_shuffle(corpus: list, debug: bool = False):
+def simple_shuffle(corpus: list, num_m: int, num_r: int, debug: bool = False):
     """
     This function implements the simple shuffle through Ray.
+
+    Parameters:
+    -----------
+    corpus: list
+        the dataset to be counted and sorted.
+    num_m: int
+        the number of Mappers.
+    num_r: int
+        the number of Reducers.
+    debug: bool
+        if Ture, print the shuffle and reduce results.
     """
 
-    num_partitions = 3
-    chunk = len(corpus) // num_partitions
-    partitions = [corpus[i * chunk : (i + 1) * chunk] for i in range(num_partitions)]
+    chunk = len(corpus) // num_m
+    remainder = len(corpus) % num_m
+    partitions = [corpus[i * chunk : (i + 1) * chunk] for i in range(num_m)]
+    if remainder:
+        partitions[-1].extend(corpus[num_m * chunk :])
 
     # =====================================
     # Map Stage.
     # =====================================
 
     map_results = [
-        apply_map.options(num_returns=num_partitions).remote(data, num_partitions)
-        for data in partitions
+        apply_map.options(num_returns=num_r).remote(data, num_r) for data in partitions
     ]
 
     # =====================================
     # Shuffle and Reduce Stage.
     # =====================================
     if debug:
-        print("Shuffle Results:")
-        for i in range(num_partitions):
+        print("\nShuffle Results:")
+        for i in range(num_m):
             mapper_results = ray.get(map_results[i])
             for j, result in enumerate(mapper_results):
                 print(f"Partial results from Mapper {i} to Reducer {j}: {result[:2]}")
@@ -69,7 +81,7 @@ def simple_shuffle(corpus: list, debug: bool = False):
     # results in each Reducer.
     outputs = []
 
-    for i in range(num_partitions):
+    for i in range(num_r):
         outputs.append(
             apply_reduce.remote(*[partition[i] for partition in map_results])
         )
@@ -90,4 +102,5 @@ if __name__ == "__main__":
     zen_of_python = subprocess.check_output(["python", "-c", "import this"])
     corpus = zen_of_python.split()
 
-    simple_shuffle(corpus, True)
+    simple_shuffle(corpus, 5, 4, False)
+    simple_shuffle(corpus, 3, 3, True)

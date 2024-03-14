@@ -32,7 +32,7 @@ python tests/ray_core.py
 ```
 and if Ray works well, the program will print `Ture`.
 
-## Shuflle Baselines
+## Shuffle Baselines
 
 There is a MapReduce demo of simple shuffle using Ray:
 ```
