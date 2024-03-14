@@ -1,10 +1,9 @@
-# This is a simple MapReduce example with the simple shuffle mechanism through
-# Ray Core. The definition of simple shuffle is define in Figure 2 of the
-# Exoshuffle paper.
+# This is a riffle shuffle implementation through Ray Core. The riffle shuffle
+# (pre-shuffle merge) is define in Figure 2 of the Exoshuffle paper.
 #
 # Reference:
-# https://docs.ray.io/en/latest/ray-core/examples/map_reduce.html (Ray Core, MapReduce)
 # https://dl.acm.org/doi/pdf/10.1145/3603269.3604848 (Exoshuffle)
+# https://dl.acm.org/doi/pdf/10.1145/3190508.3190534 (Riffle)
 
 import subprocess
 import ray
@@ -26,6 +25,22 @@ def apply_map(corpus, num_partitions: int = 3):
     return map_results
 
 
+# TODO: bug here!
+@ray.remote
+def apply_merge(num_r, *map_results):
+    # resolved_map_results = ray.get(list(map_results))
+    merge_results = []
+    for i in range(num_r):
+        merged_group = [sum(mapper_results, []) for mapper_results in zip(*map_results)]
+        # merged_group = [
+        #     item
+        #     for mapper_results in zip(*resolved_map_results)
+        #     for item in mapper_results
+        # ]
+        merge_results.append(merged_group)
+    return merge_results
+
+
 @ray.remote
 def apply_reduce(*results):
     reduce_results = dict()
@@ -38,9 +53,9 @@ def apply_reduce(*results):
     return reduce_results
 
 
-def simple_shuffle(corpus: list, num_m: int, num_r: int, debug: bool = False):
+def riffle_shuffle(corpus: list, num_m: int, num_r: int, f: int, debug: bool = False):
     """
-    This function implements the simple shuffle through Ray.
+    This function implements the riffle shuffle through Ray.
 
     Parameters:
     -----------
@@ -50,9 +65,14 @@ def simple_shuffle(corpus: list, num_m: int, num_r: int, debug: bool = False):
         the number of Mappers.
     num_r: int
         the number of Reducers.
+    f: int
+        the merging factor.
     debug: bool
         if Ture, print the shuffle and reduce results.
     """
+
+    if num_m % f != 0:
+        raise ValueError("num_m must be a multiple of f!")
 
     # =====================================
     # Map Stage.
@@ -69,21 +89,31 @@ def simple_shuffle(corpus: list, num_m: int, num_r: int, debug: bool = False):
     ]
 
     # =====================================
-    # Shuffle and Reduce Stage.
+    # Merge Stage.
+    # =====================================
+
+    num_merge = int(num_m / f)
+    merge_results = [
+        apply_merge.options(num_returns=num_r).remote(num_r, *map_results[i : i + f])
+        for i in range(num_merge)
+    ]
+
+    # =====================================
+    #  Reduce Stage.
     # =====================================
     if debug:
-        print("\nShuffle Results:")
-        for i in range(num_m):
-            mapper_results = ray.get(map_results[i])
-            for j, result in enumerate(mapper_results):
-                print(f"Partial results from Mapper {i} to Reducer {j}: {result[:2]}")
+        print("\nShuffle Results (after Merge Stages):")
+        for i in range(num_merge):
+            merger_results = ray.get(merge_results[i])
+            for j, result in enumerate(merger_results):
+                print(f"Partial results from Merger {i} to Reducer {j}: {result[:2]}")
 
     # results in each Reducer.
     outputs = []
 
     for i in range(num_r):
         outputs.append(
-            apply_reduce.remote(*[partition[i] for partition in map_results])
+            apply_reduce.remote(*[partition[i] for partition in merge_results])
         )
 
     counts = {k: v for output in ray.get(outputs) for k, v in output.items()}
@@ -102,5 +132,4 @@ if __name__ == "__main__":
     zen_of_python = subprocess.check_output(["python", "-c", "import this"])
     corpus = zen_of_python.split()
 
-    simple_shuffle(corpus, 5, 4, False)
-    simple_shuffle(corpus, 3, 3, True)
+    riffle_shuffle(corpus, 6, 4, 3, False)
