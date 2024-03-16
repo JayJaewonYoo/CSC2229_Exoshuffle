@@ -49,7 +49,8 @@ nodes = []
 for i in range(num_nodes):
     curr_node = request.RawPC("node" + str(i))
     curr_node.disk_image = 'urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU22-64-STD' # UBUNTU 22.04 as per the source code of the small-lan:37 profile
-    node.hardware_type = '' # "Specify a single physical node type (pc3000,d710,etc) instead of letting the resource mapper choose for you."
+    # node.hardware_type = '' # "Specify a single physical node type (pc3000,d710,etc) instead of letting the resource mapper choose for you."
+        # Commented out for now beacause we aren't asking for a specific machine yet
 
     # Install GenSort to the current node, still has to be opened using "tar xf FILENAME" in the execute script, and then probably has to be directly run on the execute script as well
         # NOTE: have to make sure if this is to be installed on only one node or all of the nodes
