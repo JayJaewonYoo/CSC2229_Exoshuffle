@@ -54,13 +54,13 @@ for i in range(num_nodes):
 
     # Install GenSort to the current node, still has to be opened using "tar xf FILENAME" in the execute script, and then probably has to be directly run on the execute script as well
         # NOTE: have to make sure if this is to be installed on only one node or all of the nodes
-    node.addService(pg.Install(url='http://www.ordinal.com/try.cgi/gensort-linux-1.5.tar.gz', path='/local')) # The documentation 
+    curr_node.addService(pg.Install(url='http://www.ordinal.com/try.cgi/gensort-linux-1.5.tar.gz', path='/local')) # The documentation 
 
     # Install and execute a script that is contained in the repository.
         # start and end are arguments to define gensort data to generate at each node
     start = int(interval * i)
     end = int((i + 1) * interval - 1)
-    node.addService(pg.Execute(shell="sh", command="/local/repository/startup_script.sh " + str(start) + " " + str(end)))
+    curr_node.addService(pg.Execute(shell="sh", command="/local/repository/startup_script.sh " + str(start) + " " + str(end)))
 
     nodes.append(curr_node)
 
