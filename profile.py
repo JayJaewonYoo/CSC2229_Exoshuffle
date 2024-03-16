@@ -1,6 +1,6 @@
 # Based on https://github.com/emulab/my-profile/blob/master/profile.py and https://docs.cloudlab.us/geni-lib.html
 
-"""This is a trivial example of a gitrepo-based profile; The profile source code and other software, documentation, etc. are stored in in a publicly accessible GIT repository (say, github.com). When you instantiate this profile, the repository is cloned to all of the nodes in your experiment, to `/local/repository`. 
+"""This is a gitrepo-based CloudLab profile for Jay Yoo and Kai Shen's work on their CSC2229 project; The profile source code and other software, documentation, etc. are stored in in a publicly accessible GIT repository (say, github.com). When you instantiate this profile, the repository is cloned to all of the nodes in your experiment, to `/local/repository`. 
 
 This particular profile is a simple example of using a single raw PC. It can be instantiated on any cluster; the node will boot the default operating system, which is typically a recent version of Ubuntu.
 
@@ -38,14 +38,32 @@ pc.defineParameter("osImage", "Select OS image",
 
 # Create a Request object to start building the RSpec.
 request = pc.makeRequestRSpec()
+
+
+# Variable number of nodes.
+pc.defineParameter("nodeCount", "Number of Nodes", portal.ParameterType.INTEGER, 4,
+                   longDescription="If you specify more then one node, " +
+                   "we will create a lan for you.")
+
+params = pc.bindParameters()
+# Check parameter validity.
+if params.nodeCount < 1:
+    pc.reportError(portal.ParameterError("You must choose at least 1 node.", ["nodeCount"]))
+if params.nodeCount > 1:
+    if params.nodeCount == 2:
+        lan = request.Link()
+    else:
+        lan = request.LAN()
+    pass
+
+# Add raw PCs to the request.
+num_nodes = params.nodeCount
+# nodes = []
  
 # Variables initializing for defining data generation
 max_number_of_data = 10000
-interval = max_number_of_data / 4
+interval = max_number_of_data / num_nodes
 
-# Add a raw PC to the request.
-num_nodes = 4
-nodes = []
 for i in range(num_nodes):
     curr_node = request.RawPC("node" + str(i))
     curr_node.disk_image = 'urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU22-64-STD' # UBUNTU 22.04 as per the source code of the small-lan:37 profile
@@ -62,10 +80,14 @@ for i in range(num_nodes):
     end = int((i + 1) * interval - 1)
     curr_node.addService(pg.Execute(shell="sh", command="/local/repository/startup_script.sh " + str(start) + " " + str(end)))
 
-    nodes.append(curr_node)
+    # nodes.append(curr_node) # reference profile uses LAN for more than 2 nodes and always uses interfaces so I'll do the same here instead of just establishing a simple link
+    if num_nodes > 1:
+        iface = curr_node.addInterface("eth1")
+        lan.addInterface(iface)
+        pass
 
 # Create a link between them
-link1 = request.Link(members = nodes)
+# link1 = request.Link(members = nodes)
 
 # Print the RSpec to the enclosing page.
 pc.printRequestRSpec(request)
