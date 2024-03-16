@@ -45,10 +45,25 @@ pc.defineParameter("nodeCount", "Number of Nodes", portal.ParameterType.INTEGER,
                    longDescription="If you specify more then one node, " +
                    "we will create a lan for you.")
 
+
+# Optional physical type for all nodes.
+pc.defineParameter("phystype",  "Optional physical node type",
+                   portal.ParameterType.STRING, "",
+                   longDescription="Specify a single physical node type (pc3000,d710,etc) " +
+                   "instead of letting the resource mapper choose for you.")
+
 params = pc.bindParameters()
 # Check parameter validity.
 if params.nodeCount < 1:
     pc.reportError(portal.ParameterError("You must choose at least 1 node.", ["nodeCount"]))
+
+if params.phystype != "":
+    tokens = params.phystype.split(",")
+    if len(tokens) != 1:
+        pc.reportError(portal.ParameterError("Only a single type is allowed", ["phystype"]))
+
+pc.verifyParameters()
+
 if params.nodeCount > 1:
     if params.nodeCount == 2:
         lan = request.Link()
@@ -84,6 +99,10 @@ for i in range(num_nodes):
     if num_nodes > 1:
         iface = curr_node.addInterface("eth1")
         lan.addInterface(iface)
+        pass
+
+    if params.phystype != "":
+        node.hardware_type = params.phystype
         pass
 
 # Create a link between them
