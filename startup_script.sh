@@ -22,6 +22,11 @@ install_ray() {
 	pip install -U \"ray[default]\"
 }
 
+install_libraries() {
+	pip install -Ur requirements.txt
+}
+
 prepare_gensort
 run_gensort
-install_ray
+# install_ray
+install_libraries
