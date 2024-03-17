@@ -1,13 +1,13 @@
 #!/bin/bash
 
 prepare_gensort() {
-	sudo apt-get update
 	TARFILE=/local/gensort-linux-1.5.tar.gz
 	tar xf $TARFILE -C /local
 }
 
 run_gensort() {
-	/local/gensort -c -b$1 $2 /local/generated_data
+	mkdir /local/generated_data
+	/local/64/gensort -c -b$1 $2 /local/generated_data
 }
 # See: https://github.com/exoshuffle/cloudsort/blob/91775e10347da91c76d95a13bf6c189a31ea4bef/cloudsort/sort_utils.py#L87
 # 	This link shows code on running gensort
@@ -23,10 +23,12 @@ install_ray() {
 }
 
 install_libraries() {
+	sudo apt-get update
+	sudo apt-get install python3-pip
 	pip install -Ur requirements.txt
 }
 
+install_libraries
 prepare_gensort
 run_gensort
 # install_ray
-install_libraries
