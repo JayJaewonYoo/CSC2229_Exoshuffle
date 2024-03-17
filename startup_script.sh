@@ -24,5 +24,5 @@ install_libraries() {
 }
 
 install_libraries
-# prepare_gensort
-# run_gensort $1 $2
+# prepare_gensort # Install command in profile.py does this
+run_gensort $1 $2
