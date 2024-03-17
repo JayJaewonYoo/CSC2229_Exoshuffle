@@ -6,8 +6,8 @@ prepare_gensort() {
 }
 
 run_gensort() {
-	mkdir /local/generated_data
-	/local/64/gensort -c -b$1 $2 /local/generated_data
+	mkdir -p /local/generated_data
+	sudo /local/64/gensort -c -b$1 $2 /local/generated_data/partitioned_data
 }
 # See: https://github.com/exoshuffle/cloudsort/blob/91775e10347da91c76d95a13bf6c189a31ea4bef/cloudsort/sort_utils.py#L87
 # 	This link shows code on running gensort
@@ -18,8 +18,8 @@ run_gensort() {
 #	Link to direct gensort documentation: http://www.ordinal.com/gensort.html
 
 install_libraries() {
-	sudo apt-get update -y
-	sudo apt-get install python3-pip
+	sudo apt-get -y update
+	sudo apt-get -y install python3-pip
 	pip install -Ur /local/requirements.txt
 }
 
