@@ -85,13 +85,13 @@ for i in range(num_nodes):
 
     # Install GenSort to the current node, still has to be opened using "tar xf FILENAME" in the execute script, and then probably has to be directly run on the execute script as well
         # NOTE: have to make sure if this is to be installed on only one node or all of the nodes
-    curr_node.addService(pg.Install(url='http://www.ordinal.com/try.cgi/gensort-linux-1.5.tar.gz', path='/local')) # The documentation 
+    # curr_node.addService(pg.Install(url='http://www.ordinal.com/try.cgi/gensort-linux-1.5.tar.gz', path='/local')) # The documentation 
 
     # Install and execute a script that is contained in the repository.
         # start and end are arguments to define gensort data to generate at each node
     start = int(interval * i)
     end = int((i + 1) * interval - 1)
-    curr_node.addService(pg.Execute(shell="sh", command="/local/repository/startup_script.sh " + str(start) + " " + str(end)))
+    # curr_node.addService(pg.Execute(shell="sh", command="/local/repository/startup_script.sh " + str(start) + " " + str(end)))
 
     # nodes.append(curr_node) # reference profile uses LAN for more than 2 nodes and always uses interfaces so I'll do the same here instead of just establishing a simple link
     if num_nodes > 1:
