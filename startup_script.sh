@@ -17,11 +17,6 @@ run_gensort() {
 #	/local/generated_data is the path to the file where the records will be written to
 #	Link to direct gensort documentation: http://www.ordinal.com/gensort.html
 
-
-install_ray() {
-	pip install -U \"ray[default]\"
-}
-
 install_libraries() {
 	sudo apt-get update
 	sudo apt-get install python3-pip
@@ -29,6 +24,5 @@ install_libraries() {
 }
 
 install_libraries
-prepare_gensort
-run_gensort
-# install_ray
+# prepare_gensort
+# run_gensort $1 $2
