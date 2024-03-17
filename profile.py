@@ -86,7 +86,7 @@ for i in range(num_nodes):
     # Install GenSort to the current node, still has to be opened using "tar xf FILENAME" in the execute script, and then probably has to be directly run on the execute script as well
         # NOTE: have to make sure if this is to be installed on only one node or all of the nodes
     curr_node.addService(pg.Install(url='http://www.ordinal.com/try.cgi/gensort-linux-1.5.tar.gz', path='/local')) # The documentation 
-    curr_node.addService(pg.Install(url='https://github.com/JayJaewonYoo/CSC2229_Exoshuffle/blob/main/startup_script.tar.gz', path='/local')) # The documentation 
+    curr_node.addService(pg.Install(url='https://github.com/JayJaewonYoo/CSC2229_Exoshuffle/raw/main/startup_files.tar.gz', path='/local')) # The documentation 
 
     # Install and execute a script that is contained in the repository.
         # start and end are arguments to define gensort data to generate at each node

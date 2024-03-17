@@ -18,9 +18,9 @@ run_gensort() {
 #	Link to direct gensort documentation: http://www.ordinal.com/gensort.html
 
 install_libraries() {
-	sudo apt-get update
+	sudo apt-get update -y
 	sudo apt-get install python3-pip
-	pip install -Ur requirements.txt
+	pip install -Ur /local/requirements.txt
 }
 
 install_libraries
