@@ -25,18 +25,12 @@ def apply_map(corpus, num_partitions: int = 3):
     return map_results
 
 
-# TODO: bug here!
 @ray.remote
 def apply_merge(num_r, *map_results):
-    # resolved_map_results = ray.get(list(map_results))
+    resolved_map_results = [ray.get(result) for result in map_results]
     merge_results = []
     for i in range(num_r):
-        merged_group = [sum(mapper_results, []) for mapper_results in zip(*map_results)]
-        # merged_group = [
-        #     item
-        #     for mapper_results in zip(*resolved_map_results)
-        #     for item in mapper_results
-        # ]
+        merged_group = [item for sublist in resolved_map_results for item in sublist[i]]
         merge_results.append(merged_group)
     return merge_results
 
@@ -66,7 +60,7 @@ def riffle_shuffle(corpus: list, num_m: int, num_r: int, f: int, debug: bool = F
     num_r: int
         the number of Reducers.
     f: int
-        the merging factor.
+        the merging factor, which means how many Mappers map to one Merger.
     debug: bool
         if Ture, print the shuffle and reduce results.
     """
@@ -92,9 +86,12 @@ def riffle_shuffle(corpus: list, num_m: int, num_r: int, f: int, debug: bool = F
     # Merge Stage.
     # =====================================
 
+    # the number of Mergers.
     num_merge = int(num_m / f)
     merge_results = [
-        apply_merge.options(num_returns=num_r).remote(num_r, *map_results[i : i + f])
+        apply_merge.options(num_returns=num_r).remote(
+            num_r, *map_results[i * f : (i + 1) * f]
+        )
         for i in range(num_merge)
     ]
 
@@ -132,4 +129,4 @@ if __name__ == "__main__":
     zen_of_python = subprocess.check_output(["python", "-c", "import this"])
     corpus = zen_of_python.split()
 
-    riffle_shuffle(corpus, 6, 4, 3, False)
+    riffle_shuffle(corpus, 6, 4, 3, True)

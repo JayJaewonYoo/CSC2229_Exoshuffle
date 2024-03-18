@@ -39,6 +39,11 @@ There is a MapReduce demo of simple shuffle using Ray:
 python baselines/simple.py
 ```
 
+Also, riffle shuffle can be executed through the following command:
+```
+python baselines/riffle.py
+```
+
 ## References
 
 [Ray Document](https://docs.ray.io/en/latest/index.html)
