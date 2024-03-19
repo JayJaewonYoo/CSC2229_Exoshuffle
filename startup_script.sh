@@ -20,6 +20,7 @@ run_gensort() {
 install_libraries() {
 	sudo apt-get -y update
 	sudo apt-get -y install python3-pip
+	sudo apt-get -y install git-all
 	pip install -Ur /local/requirements.txt
 }
 
